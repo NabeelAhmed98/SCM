@@ -1,13 +1,6 @@
 ﻿@model SCM.Data.Models.Contact
 
-@section Styles{
-    .input-validation-error {
-    border: solid 1px red;
-    }
-    .field-validation-error {
-    color: red;
-    }
-}
+
 @using (Html.BeginForm(null, null, FormMethod.Post, new { @id = "CreateFrm", @enctype = "multipart/form-data" }))
 {
     @Html.AntiForgeryToken()

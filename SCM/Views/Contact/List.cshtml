@@ -1,0 +1,412 @@
+﻿@model IEnumerable<SCM.Data.Models.Contact>
+
+@{
+    ViewBag.Title = "List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section scripts {
+
+    
+    <script type="text/javascript">
+        var noOfEmails = 0;
+        var choices = ["Personal", "Business"];
+        var email = '';
+        $(document).ready(function () {
+            $("#Search").keyup(function () {
+
+                var input = this.value.split(" ");
+
+                var rows = $('#body').find("tr");
+                if (this.value == "") {
+                    rows.show();
+                    return;
+                }
+                rows.hide();
+
+                rows.filter(function (i, v) {
+                    var $t = $(this);
+                    for (var d = 0; d < input.length; ++d) {
+                        if ($t.is(":contains('" + input[d] + "')")) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                    //show the rows that match.
+                    .show();
+            });
+            $('#Create').click(function () {
+                noOfEmails = 0;
+                email = '';
+                $.ajax({
+                    type: "GET",
+                    url: '/Contact/Create',
+                    contentType: "application/json; charset=utf-8",
+                    datatype: "json",
+                    success: function (data) {
+                        $('#CreateBody').html(data);
+                        $('#CreateModal').modal({ "backdrop": "static", keyboard: true });
+                        $('#CreateModal').modal('show');
+                        resetValidations('CreateFrm');
+                    },
+                    error: function () {
+                        alert("Dynamic content load failed.");
+                    }
+                });
+            });
+
+            $('#CreateModal').on('hidden.bs.modal', function (e) {
+                location.reload(true);
+            })
+
+                 $('#EditModal').on('hidden.bs.modal', function (e) {
+                location.reload(true);
+            })
+
+            $("#ContactTable tbody").on("dblclick", "tr", function (e) {
+                var ContactId = $(this).find('td:eq(0)').text().trim();
+                noOfEmails = 0;
+                email = '';
+                $.ajax({
+                    type: "GET",
+                    url: '/Contact/Edit',
+                    contentType: "application/json; charset=utf-8",
+                    data: { "ContactId": parseInt(ContactId), },
+                    datatype: "json",
+                    success: function (data) {
+                        $('#EditBody').html(data);
+                        
+                        $('#EditModal').modal({ "backdrop": "static", keyboard: true });
+                        $('#EditBody').modal('show');
+
+                        getEmails(parseInt(ContactId));
+
+                        resetValidations('EditFrm');
+                    },
+                    error: function () {
+                        alert("Dynamic content load failed.");
+                    }
+                });
+
+
+            });
+        });
+
+        var removeEmail = function () {
+            if (noOfEmails == 0) {
+                return;
+            }
+
+
+            $("#Contact_EmailAddresses_" + noOfEmails).remove();
+            $("#txt_EmailAddresses_" + noOfEmails).remove();
+            $("#span_EmailAddresses_" + noOfEmails).remove();
+            $("#Select_EmailAddresses_" + noOfEmails).remove();
+            $("#option_EmailAddresses_" + noOfEmails + "_0").remove();
+            $("#option_EmailAddresses_" + noOfEmails + "_1").remove();
+            noOfEmails--;
+        };
+
+        var addEmail = function () {
+            email = getNestedItemName("Contact.EmailAddresses", noOfEmails);
+
+            // increment for the next one!
+            noOfEmails++;
+
+            // append a new textbox inside the products div
+            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class='col-md-10'>");
+
+            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control' />");
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            var selectHTML = "";
+            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control'>";
+            for (i = 0; i < choices.length; i = i + 1) {
+                selectHTML += "<option id='option_EmailAddresses_" + noOfEmails + "_" + i + "' value='" + i + "'>" + choices[i] + "</option>";
+            }
+            selectHTML += "</select>";
+            $("#EmailAddresses").append(selectHTML);
+            //$("#EmailAddresses").append("<select name='" + email + ".EmailType' class='form-control'>");
+            //for (i = 0; i < choices.length; i = i + 1) {
+
+            //    $("#EmailAddresses").append("<option value='" + i + "'>" + choices[i] + "</option>");
+            //}
+            //$("#EmailAddresses").append("</select>");
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
+            $("#EmailAddresses").append("</div>");
+
+        };
+
+         var addEmailForUpdate = function () {
+            email = getNestedItemName("Contact.EmailAddresses", noOfEmails);
+
+            // increment for the next one!
+            noOfEmails++;
+
+            // append a new textbox inside the products div
+            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class='col-md-10'>");
+            $("#EmailAddresses").append("<input type='hidden' name='" + email + ".EmailAddressId' id='id_EmailAddresses_" + noOfEmails + "' class='form-control' value='0' />");
+            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control' />");
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            var selectHTML = "";
+            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control'>";
+            for (i = 0; i < choices.length; i = i + 1) {
+                selectHTML += "<option id='option_EmailAddresses_" + noOfEmails + "_" + i + "' value='" + i + "'>" + choices[i] + "</option>";
+            }
+            selectHTML += "</select>";
+            $("#EmailAddresses").append(selectHTML);
+            //$("#EmailAddresses").append("<select name='" + email + ".EmailType' class='form-control'>");
+            //for (i = 0; i < choices.length; i = i + 1) {
+
+            //    $("#EmailAddresses").append("<option value='" + i + "'>" + choices[i] + "</option>");
+            //}
+            //$("#EmailAddresses").append("</select>");
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
+            $("#EmailAddresses").append("</div>");
+
+        };
+
+        var removeEmailForUpdate = function () {
+            if (noOfEmails == 0) {
+                return;
+            }
+
+
+            $("#Contact_EmailAddresses_" + noOfEmails).remove();
+            $("#txt_EmailAddresses_" + noOfEmails).remove();
+             $("#id_EmailAddresses_" + noOfEmails).remove();
+            $("#span_EmailAddresses_" + noOfEmails).remove();
+            $("#Select_EmailAddresses_" + noOfEmails).remove();
+            $("#option_EmailAddresses_" + noOfEmails + "_0").remove();
+            $("#option_EmailAddresses_" + noOfEmails + "_1").remove();
+            noOfEmails--;
+        };
+
+        function resetValidations(formId) {
+            var $form = $("#" + formId);
+            var $validator = $form.validate();
+            
+            $validator.resetForm();
+        }
+
+        function getNestedItemName(itemName, itemNumber) {
+
+            return (itemName + "[" + itemNumber + "]");
+        }
+
+        var CreateContact = function () {
+            if (!$("#CreateFrm").valid()) {
+                alert("Invalid Form");
+                return;
+            }
+            var frm = generateFormData();
+            $.ajax({
+                type: "POST",
+                url: '/Contact/Insert',
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                data: JSON.stringify(frm),
+                success: function (data) {
+                    if (data.Success) {
+                        alert("Successfully Inserted Record");
+                        $('#CreateModal').modal('hide');
+                    }
+                    else {
+                        alert("Record Was Not Inserted");
+                    }
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+
+                    alert("Insert failed");
+                }
+            });
+        }
+
+        var UpdateContact = function () {
+            if (!$("#EditFrm").valid()) {
+                alert("Invalid Form");
+                return;
+            }
+            var frm = generateUpdateFormData();
+            $.ajax({
+                type: "POST",
+                url: '/Contact/Update',
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                data: JSON.stringify(frm),
+                success: function (data) {
+                    if (data.Success) {
+                        alert("Successfully Updated Record");
+                        $('#EditModal').modal('hide');
+                    }
+                    else {
+                        alert("Record Was Not Updated");
+                    }
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+
+                    alert("Updated failed");
+                }
+            });
+        }
+
+        function getEmails(id) {
+            $.ajax({
+                    type: "GET",
+                    url: '/Contact/getEmails',
+                    contentType: "application/json; charset=utf-8",
+                    data: { "ContactId": parseInt(id), },
+                    datatype: "json",
+                    success: function (data) {
+                        
+                        data.forEach(function (item) {
+                            console.log(item);
+                            addEmailForUpdate();
+                            $("#txt_EmailAddresses_" + noOfEmails).val(item.Email);
+                            $("#txt_EmailAddresses_" + noOfEmails).text(item.Email);
+                            $("#id_EmailAddresses_" + noOfEmails).text(item.EmailAddressId);
+                            $("#id_EmailAddresses_" + noOfEmails).val(item.EmailAddressId);
+                            $("select#Select_EmailAddresses_" + noOfEmails).val(item.EmailType);
+                        });
+                    },
+                    error: function () {
+                        alert("Dynamic content load failed.");
+                    }
+                });
+        }
+
+        function generateFormData() {
+            var EmailAddresses = [];
+            for (i = 1; i <= noOfEmails; i++) {
+                EmailAddresses.push({
+                    "Email": $("#txt_EmailAddresses_" + i).val(),
+                    "EmailType": parseInt($("select#Select_EmailAddresses_" + i + " > option:selected").val())
+                });
+            }
+
+
+            var contact = {
+                "FirstName": $('#FirstName').val(),
+                "LastName": $('#LastName').val(),
+                "EmailAddresses": EmailAddresses
+            };
+
+
+            return contact;
+        }
+
+          function generateUpdateFormData() {
+            var EmailAddresses = [];
+              for (i = 1; i <= noOfEmails; i++) {
+                  if ($("#id_EmailAddresses_" + i).length > 0){
+                      console.log(i);
+                    }
+                  EmailAddresses.push({
+                    
+                    "EmailAddressId": parseInt($("#id_EmailAddresses_" + i).val()),
+                    "Email": $("#txt_EmailAddresses_" + i).val(),
+                    "EmailType": parseInt($("select#Select_EmailAddresses_" + i + " > option:selected").val())
+                });
+            }
+
+
+              var contact = {
+                "ContactId": parseInt($("#ContactId").val()),
+                "FirstName": $('#FirstName').val(),
+                "LastName": $('#LastName').val(),
+                "EmailAddresses": EmailAddresses
+            };
+
+              console.log(contact);
+            return contact;
+        }
+
+    </script>
+
+}
+<h2>List</h2>
+
+<p>
+    <button type="button" id="Create">Add New</button>
+</p>
+
+Filter @Html.TextBox("Search")
+<table class="table" id="ContactTable">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ContactId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LastName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailAddresses)
+            </th>
+        </tr>
+    </thead>
+    <tbody id="body">
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ContactId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.FirstName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LastName)
+                </td>
+                <td>
+                    @foreach (var email in item.EmailAddresses)
+                    {
+                        var emailListed = email.Email + " (" + email.EmailType + ")";
+
+                        @Html.DisplayFor(modelitem => emailListed)
+                        <br />
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="modal fade" id="CreateModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">&times;</a>
+                <h3 class="modal-title">Create</h3>
+            </div>
+            <div class="modal-body" id="CreateBody">
+
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-success" onclick="CreateContact()">Submit</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="EditModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">&times;</a>
+                <h3 class="modal-title">Edit</h3>
+            </div>
+            <div class="modal-body" id="EditBody">
+
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-success" onclick="UpdateContact()">Submit</a>
+            </div>
+        </div>
+    </div>
+</div>

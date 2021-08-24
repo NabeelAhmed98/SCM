@@ -15,7 +15,9 @@ namespace SCM.Controllers
             return View();
         }
 
+        
         public ActionResult List() {
+
             IEnumerable<Data.Models.Contact> ContactList = Data.contact.GetContactList();
 
             return View(ContactList);

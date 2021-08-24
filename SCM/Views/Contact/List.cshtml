@@ -4,49 +4,79 @@
     ViewBag.Title = "List";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@section Styles
+{
+    <style type="text/css">
+        .error {
+            color: red;
+            
+        }
+        label.error {
+            padding-left: 50px;
+        }
+    </style>
+}
 @section scripts {
 
-    
-    <script type="text/javascript">
-        var noOfEmails = 0;
-        var choices = ["Personal", "Business"];
-        var email = '';
-        $(document).ready(function () {
-            $("#Search").keyup(function () {
 
+    <script type="text/javascript">
+       // #region variables
+        var noOfEmails = 0; //number of emails used to add and remove email controls
+        var choices = ["Personal", "Business"]; //choices for emailType used to populate select tag
+        var email = ''; //email control name
+      //  #endregion
+
+        $(document).ready(function () {
+            //event on keyup for filter textbox
+            $("#Search").keyup(function () {
+                //take input and split it by ' '
                 var input = this.value.split(" ");
 
+                //find the body <tr> tags(the rows) in the tag identified by
+                //#body (the tbody tag)
                 var rows = $('#body').find("tr");
+                //if the value is an empty string then show all rows
                 if (this.value == "") {
                     rows.show();
                     return;
                 }
+                //else first hide all rows
                 rows.hide();
 
+                //filter from all rows
                 rows.filter(function (i, v) {
                     var $t = $(this);
+                    //loop through all inputted words
                     for (var d = 0; d < input.length; ++d) {
+                        //if the row contains the word anywhere
                         if ($t.is(":contains('" + input[d] + "')")) {
+                            //then true
                             return true;
                         }
                     }
+                    //else false
                     return false;
                 })
                     //show the rows that match.
                     .show();
             });
+            //event on click of the Add New button
             $('#Create').click(function () {
+                //reset noOfEmails and email variables
                 noOfEmails = 0;
                 email = '';
+                //make an Ajax call to get the partialview
                 $.ajax({
                     type: "GET",
                     url: '/Contact/Create',
                     contentType: "application/json; charset=utf-8",
                     datatype: "json",
                     success: function (data) {
+                        //bind the partialview to the modal and show it
                         $('#CreateBody').html(data);
                         $('#CreateModal').modal({ "backdrop": "static", keyboard: true });
                         $('#CreateModal').modal('show');
+                        //reset validations for the form
                         resetValidations('CreateFrm');
                     },
                     error: function () {
@@ -55,18 +85,26 @@
                 });
             });
 
+            //on modal hide
             $('#CreateModal').on('hidden.bs.modal', function (e) {
+                //reload page
                 location.reload(true);
             })
 
-                 $('#EditModal').on('hidden.bs.modal', function (e) {
+            //on modal hide
+            $('#EditModal').on('hidden.bs.modal', function (e) {
+                //reload page
                 location.reload(true);
             })
 
+            //On double clicking a row in the body of the table
             $("#ContactTable tbody").on("dblclick", "tr", function (e) {
+                //Get the contact id (First column)
                 var ContactId = $(this).find('td:eq(0)').text().trim();
+                //reset variables
                 noOfEmails = 0;
                 email = '';
+                //Make ajax call while passing in the contact id to get associated record
                 $.ajax({
                     type: "GET",
                     url: '/Contact/Edit',
@@ -74,13 +112,15 @@
                     data: { "ContactId": parseInt(ContactId), },
                     datatype: "json",
                     success: function (data) {
+                        //Bind partial view to modal
                         $('#EditBody').html(data);
-                        
+
                         $('#EditModal').modal({ "backdrop": "static", keyboard: true });
                         $('#EditBody').modal('show');
 
+                        //Get the associated emails
                         getEmails(parseInt(ContactId));
-
+                        //reset validations
                         resetValidations('EditFrm');
                     },
                     error: function () {
@@ -92,12 +132,15 @@
             });
         });
 
+
         var removeEmail = function () {
+            //if noOfEmails is 0 then return (nothing to remove)
             if (noOfEmails == 0) {
                 return;
             }
 
-
+            //Remove all associated controls and decrement the variable
+            //(tried empty on the div but was not working for some reason)
             $("#Contact_EmailAddresses_" + noOfEmails).remove();
             $("#txt_EmailAddresses_" + noOfEmails).remove();
             $("#span_EmailAddresses_" + noOfEmails).remove();
@@ -108,72 +151,78 @@
         };
 
         var addEmail = function () {
+            //set email variable to NestedItemName to make form collection easier
             email = getNestedItemName("Contact.EmailAddresses", noOfEmails);
 
             // increment for the next one!
             noOfEmails++;
 
-            // append a new textbox inside the products div
-            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class='col-md-10'>");
-
-            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control' />");
-            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            //append a div for the control
+            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class=''>");
+            //append a textbox for email>
+            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control col-md-offset-1 col-sm-offset-1' />");
+            //append the span for unobstructive validation
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger col-sm-offset-1 col-md-offset-1' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            //setup the tag for select
             var selectHTML = "";
-            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control'>";
+            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control col-md-offset-1 col-sm-offset-1'>";
             for (i = 0; i < choices.length; i = i + 1) {
                 selectHTML += "<option id='option_EmailAddresses_" + noOfEmails + "_" + i + "' value='" + i + "'>" + choices[i] + "</option>";
             }
             selectHTML += "</select>";
+            //append a select tag for emailtype
             $("#EmailAddresses").append(selectHTML);
-            //$("#EmailAddresses").append("<select name='" + email + ".EmailType' class='form-control'>");
-            //for (i = 0; i < choices.length; i = i + 1) {
+            //append the span for unobstructive validation
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger col-sm-offset-1 col-md-offset-1' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
+            //append the ending div tag and hr line
+            $("#EmailAddresses").append("</div><hr />");
 
-            //    $("#EmailAddresses").append("<option value='" + i + "'>" + choices[i] + "</option>");
-            //}
-            //$("#EmailAddresses").append("</select>");
-            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
-            $("#EmailAddresses").append("</div>");
 
         };
 
-         var addEmailForUpdate = function () {
+        var addEmailForUpdate = function () {
+            //set email variable to NestedItemName to make form collection easier
             email = getNestedItemName("Contact.EmailAddresses", noOfEmails);
 
             // increment for the next one!
             noOfEmails++;
 
-            // append a new textbox inside the products div
-            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class='col-md-10'>");
-            $("#EmailAddresses").append("<input type='hidden' name='" + email + ".EmailAddressId' id='id_EmailAddresses_" + noOfEmails + "' class='form-control' value='0' />");
-            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control' />");
-            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            //append a div for the control
+            $("#EmailAddresses").append("<div  id='Contact_EmailAddresses_" + noOfEmails + "' class=''>");
+             //append a hidden textbox for emailaddress id>
+            $("#EmailAddresses").append("<input type='hidden' name='" + email + ".EmailAddressId' id='id_EmailAddresses_" + noOfEmails + "' class='form-control col-md-offset-1 col-sm-offset-1' value='0' />");
+            //append a textbox for email>
+            $("#EmailAddresses").append("<input type='email' name='" + email + ".Email' id='txt_EmailAddresses_" + noOfEmails + "' class='form-control col-md-offset-1 col-sm-offset-1' />");
+            //append the span for unobstructive validation
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger col-md-offset-1 col-sm-offset-1' data-valmsg-for='" + email + ".Email' data-valmsg-replace='true' id='span_EmailAddresses_" + noOfEmails + "'></span>");
+            //setup the tag for select
             var selectHTML = "";
-            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control'>";
+            selectHTML = "<select id='Select_EmailAddresses_" + noOfEmails + "' name='" + email + ".EmailType' class='form-control col-md-offset-1 col-sm-offset-1'>";
             for (i = 0; i < choices.length; i = i + 1) {
                 selectHTML += "<option id='option_EmailAddresses_" + noOfEmails + "_" + i + "' value='" + i + "'>" + choices[i] + "</option>";
             }
             selectHTML += "</select>";
+            //append a select tag for emailtype
             $("#EmailAddresses").append(selectHTML);
-            //$("#EmailAddresses").append("<select name='" + email + ".EmailType' class='form-control'>");
-            //for (i = 0; i < choices.length; i = i + 1) {
-
-            //    $("#EmailAddresses").append("<option value='" + i + "'>" + choices[i] + "</option>");
-            //}
-            //$("#EmailAddresses").append("</select>");
-            $("#EmailAddresses").append("<span class='field-validation-valid text-danger' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
-            $("#EmailAddresses").append("</div>");
+            
+            //append the span for unobstructive validation
+            $("#EmailAddresses").append("<span class='field-validation-valid text-danger col-md-offset-1 col-sm-offset-1' data-valmsg-for='" + email + ".EmailType' data-valmsg-replace='true'></span>");
+            //append the ending div tag and hr line
+            $("#EmailAddresses").append("</div><hr />");
 
         };
 
         var removeEmailForUpdate = function () {
+             //if noOfEmails is 0 then return (nothing to remove)
             if (noOfEmails == 0) {
                 return;
             }
 
-
+             //Remove all associated controls and decrement the variable
+            //(tried empty on the div but was not working for some reason)
             $("#Contact_EmailAddresses_" + noOfEmails).remove();
             $("#txt_EmailAddresses_" + noOfEmails).remove();
-             $("#id_EmailAddresses_" + noOfEmails).remove();
+            $("#id_EmailAddresses_" + noOfEmails).remove();
             $("#span_EmailAddresses_" + noOfEmails).remove();
             $("#Select_EmailAddresses_" + noOfEmails).remove();
             $("#option_EmailAddresses_" + noOfEmails + "_0").remove();
@@ -182,23 +231,28 @@
         };
 
         function resetValidations(formId) {
+            //sets the form and validator variables to the form in the modal
             var $form = $("#" + formId);
             var $validator = $form.validate();
-            
+
+            //call resetForm on validator
             $validator.resetForm();
         }
 
         function getNestedItemName(itemName, itemNumber) {
-
+            //returns a formatted string
             return (itemName + "[" + itemNumber + "]");
         }
 
         var CreateContact = function () {
+            //if form is invalid return and alert user
             if (!$("#CreateFrm").valid()) {
                 alert("Invalid Form");
                 return;
             }
+            //generate form data
             var frm = generateFormData();
+            //make ajax call while passing in Contact object
             $.ajax({
                 type: "POST",
                 url: '/Contact/Insert',
@@ -207,15 +261,17 @@
                 data: JSON.stringify(frm),
                 success: function (data) {
                     if (data.Success) {
+                        //if successful, alert user and hide modal
                         alert("Successfully Inserted Record");
                         $('#CreateModal').modal('hide');
                     }
                     else {
+                        //alert user on failuer
                         alert("Record Was Not Inserted");
                     }
                 },
                 error: function (xhr) {
-                    console.log(xhr);
+                    
 
                     alert("Insert failed");
                 }
@@ -223,11 +279,14 @@
         }
 
         var UpdateContact = function () {
+            //if form is invalid return and alert user
             if (!$("#EditFrm").valid()) {
                 alert("Invalid Form");
                 return;
             }
+              //generate form data
             var frm = generateUpdateFormData();
+              //make ajax call while passing in Contact object
             $.ajax({
                 type: "POST",
                 url: '/Contact/Update',
@@ -236,15 +295,17 @@
                 data: JSON.stringify(frm),
                 success: function (data) {
                     if (data.Success) {
+                        //if successful, alert user and hide modal
                         alert("Successfully Updated Record");
                         $('#EditModal').modal('hide');
                     }
                     else {
+                         //alert user on failuer
                         alert("Record Was Not Updated");
                     }
                 },
                 error: function (xhr) {
-                    console.log(xhr);
+                    
 
                     alert("Updated failed");
                 }
@@ -252,31 +313,33 @@
         }
 
         function getEmails(id) {
+            //make ajax call while passing in contact id, to get associated emails
             $.ajax({
-                    type: "GET",
-                    url: '/Contact/getEmails',
-                    contentType: "application/json; charset=utf-8",
-                    data: { "ContactId": parseInt(id), },
-                    datatype: "json",
-                    success: function (data) {
-                        
-                        data.forEach(function (item) {
-                            console.log(item);
-                            addEmailForUpdate();
-                            $("#txt_EmailAddresses_" + noOfEmails).val(item.Email);
-                            $("#txt_EmailAddresses_" + noOfEmails).text(item.Email);
-                            $("#id_EmailAddresses_" + noOfEmails).text(item.EmailAddressId);
-                            $("#id_EmailAddresses_" + noOfEmails).val(item.EmailAddressId);
-                            $("select#Select_EmailAddresses_" + noOfEmails).val(item.EmailType);
-                        });
-                    },
-                    error: function () {
-                        alert("Dynamic content load failed.");
-                    }
-                });
+                type: "GET",
+                url: '/Contact/getEmails',
+                contentType: "application/json; charset=utf-8",
+                data: { "ContactId": parseInt(id), },
+                datatype: "json",
+                success: function (data) {
+                    //for each item
+                    data.forEach(function (item) {
+                        //create an email control and populate the values
+                        addEmailForUpdate();
+                        $("#txt_EmailAddresses_" + noOfEmails).val(item.Email);
+                        $("#txt_EmailAddresses_" + noOfEmails).text(item.Email);
+                        $("#id_EmailAddresses_" + noOfEmails).text(item.EmailAddressId);
+                        $("#id_EmailAddresses_" + noOfEmails).val(item.EmailAddressId);
+                        $("select#Select_EmailAddresses_" + noOfEmails).val(item.EmailType);
+                    });
+                },
+                error: function () {
+                    alert("Dynamic content load failed.");
+                }
+            });
         }
 
         function generateFormData() {
+            //generate and return a contact object for insert
             var EmailAddresses = [];
             for (i = 1; i <= noOfEmails; i++) {
                 EmailAddresses.push({
@@ -296,14 +359,15 @@
             return contact;
         }
 
-          function generateUpdateFormData() {
+        function generateUpdateFormData() {
+            //generate and return a contact object for update
             var EmailAddresses = [];
-              for (i = 1; i <= noOfEmails; i++) {
-                  if ($("#id_EmailAddresses_" + i).length > 0){
-                      console.log(i);
-                    }
-                  EmailAddresses.push({
+            for (i = 1; i <= noOfEmails; i++) {
+                if ($("#id_EmailAddresses_" + i).length > 0) {
                     
+                }
+                EmailAddresses.push({
+
                     "EmailAddressId": parseInt($("#id_EmailAddresses_" + i).val()),
                     "Email": $("#txt_EmailAddresses_" + i).val(),
                     "EmailType": parseInt($("select#Select_EmailAddresses_" + i + " > option:selected").val())
@@ -311,14 +375,14 @@
             }
 
 
-              var contact = {
+            var contact = {
                 "ContactId": parseInt($("#ContactId").val()),
                 "FirstName": $('#FirstName').val(),
                 "LastName": $('#LastName').val(),
                 "EmailAddresses": EmailAddresses
             };
 
-              console.log(contact);
+            
             return contact;
         }
 
@@ -328,10 +392,10 @@
 <h2>List</h2>
 
 <p>
-    <button type="button" id="Create">Add New</button>
+    <button type="button" class="btn btn-primary" id="Create">Add New</button>
+    <span class="pull-right">Filter: @Html.TextBox("Search", "", htmlAttributes: new { @class = "control-label" })</span>
 </p>
 
-Filter @Html.TextBox("Search")
 <table class="table" id="ContactTable">
     <thead>
         <tr>

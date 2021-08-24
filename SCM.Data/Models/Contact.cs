@@ -11,6 +11,7 @@ namespace SCM.Data.Models
     public class Contact
     {
         [Key]
+        [Display(Name ="ID")]
         public int ContactId { get; set; }
 
         [Display(Name ="First Name")]

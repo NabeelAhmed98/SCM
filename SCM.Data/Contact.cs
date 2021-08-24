@@ -112,25 +112,34 @@ namespace SCM.Data
 
                 
 
-                //Get All emails associated with contact
+                //Get All emails associated with contact in db
                 IEnumerable<EmailAddress> emails = email.GetEmails(contact.ContactId);
+                //Get All emails part of passed in Contact object
+                IEnumerable<EmailAddress> contactEmails = contact.EmailAddresses;
 
-                foreach (EmailAddress e in emails)
-                {
-                    email.DeleteEmail(e, ref isSuccess);
-                    //Remove them
-                    //db.Entry(email).State = EntityState.Deleted;
-                    
+                //loop through db email addresses
+                foreach (EmailAddress e in emails) {
+                    //if the email address with the same id exists in the contact object list of email addresses (aka not removed)
+                    if (contactEmails.Where(x => x.EmailAddressId == e.EmailAddressId).Count() > 0)
+                    {
+                        //get the email address object with the email address id
+                        EmailAddress changedEmail = contactEmails.Where(x => x.EmailAddressId == e.EmailAddressId).First();
+                        //set the object state to modified, and update it in db
+                        db.Entry(changedEmail).State = EntityState.Modified;
+                    }
+
+                    else {
+                        //if it does not exists(aka it has been removed) then delete it from db
+                        email.DeleteEmail(e, ref isSuccess);
+                    }
                 }
+
+               
                 //loop through emails in the Contact object
                 foreach (EmailAddress email in contact.EmailAddresses) {
-                    //if the email is already in the db
-                    if (db.EmailAddresses.Where(e => e.EmailAddressId == email.EmailAddressId).Count() > 0)
-                    {
-                        //update the email object in the db
-                        db.Entry(email).State = EntityState.Modified;
-                    }
-                    else {
+                    
+                    //targets the remaining email address objects not dealt with in previous loop (newly added)
+                    if(email.EmailAddressId == 0) {
                         //add the email object to the db
                         db.EmailAddresses.Add(email);
                     }

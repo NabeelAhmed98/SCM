@@ -109,6 +109,19 @@ namespace SCM.Data
                 SCMContext db = new SCMContext();
                 //set the Contact object state to modified, and update it in db
                 db.Entry(contact).State = EntityState.Modified;
+
+                
+
+                //Get All emails associated with contact
+                IEnumerable<EmailAddress> emails = email.GetEmails(contact.ContactId);
+
+                foreach (EmailAddress e in emails)
+                {
+                    email.DeleteEmail(e, ref isSuccess);
+                    //Remove them
+                    //db.Entry(email).State = EntityState.Deleted;
+                    
+                }
                 //loop through emails in the Contact object
                 foreach (EmailAddress email in contact.EmailAddresses) {
                     //if the email is already in the db

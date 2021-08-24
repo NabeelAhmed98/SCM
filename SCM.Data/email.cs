@@ -1,6 +1,8 @@
 ﻿using SCM.Data.Context;
+using SCM.Data.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +49,36 @@ namespace SCM.Data
            
             //return A list of emailAddress objects
             return AddressList;
+        }
+        /**
+        * <summary>This method takes a <paramref name="email"/> object and tries to delete it from the database.
+        * Depending on the success the <paramref name="isSuccess"/> value is updated
+        * <param name="isSuccess"/>Boolean that is referenced, indicating the success of the operation
+        * <param name="email">Email Address object that is being Deleted</param>
+        * <example>
+        * A null <paramref name="email"/> object will not be deleted and <paramref name="isSuccess"/> will be false
+        * Wheras a proper <paramref name="email"/> object will be deleted and <paramref name="isSuccess"/> will be true
+        * </example>
+        * </summary>
+        */
+        public static void DeleteEmail(EmailAddress email, ref bool isSuccess)
+        {
+            try
+            {
+                //Initializing values
+                SCMContext db = new SCMContext();
+                //Delete the Email Address object in the db
+                db.Entry(email).State = EntityState.Deleted;
+                //Save changes
+                db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                //set isSuccess to false
+                isSuccess = false;
+
+            }
+
         }
     }
 }
